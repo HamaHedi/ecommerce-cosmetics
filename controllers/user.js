@@ -8,6 +8,16 @@ const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 const path = require('path')
 const fs = require('fs')
+const nodemailer = require('nodemailer');
+
+// Create a transporter using SMTP
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'mohamedbenjedida18@gmail.com', // Your Gmail email address
+    pass: 'svov yfdf fzzd qqec' // Your Gmail password
+  }
+});
 
 // @desc    Register user
 // @route   POST /api/register
@@ -52,51 +62,48 @@ exports.logout = AsyncHandler(async (req, res, next) => {
 // @route   POST /api/password/forgot
 // @access  Public
 exports.forgotPassword = AsyncHandler(async (req, res, next) => {
-	const { email } = req.body
-
-	const user = await User.findOne({ email })
-
+	const { email } = req.body;
+  
+	const user = await User.findOne({ email });
+  
 	if (!user) {
-		return next(new ErrorHandler('User not found with this email!', 404))
+	  return next(new ErrorHandler('User not found with this email!', 404));
 	}
-
+  
 	// Get reset token
-	const resetToken = user.getResetPasswordToken()
-
-	await user.save({ validateBeforeSave: false })
-
-	// Create reset password url
-	let resetUrl = `${req.protocol}://${req.get('host')}/password/reset/${resetToken}`
-	// let resetUrl = `${process.env.FRONTEND_URL}/password/reset/${resetToken}`
-
-	const emailData = {
-		from: process.env.EMAIL_FROM,
-		to: email,
-		subject: `Password Recovery`,
-		html: `
-                <h1>Your password reset token is as follow:</h1>
-                <a href="${resetUrl}">${resetUrl}</a>
-                <hr />
-                <p>If you have not requested this email, then ignore it.</p>
-            `,
-	}
-
-	sgMail
-		.send(emailData)
-		.then((sent) => {
-			return res.json({
-				message: `Email has been sent to ${email}. Follow the instruction to reset your password.`,
-			})
-		})
-		.catch(async (err) => {
-			user.resetPasswordToken = undefined
-			user.resetPasswordExpire = undefined
-
-			await user.save({ validateBeforeSave: false })
-
-			return next(new ErrorHandler(err.message, 500))
-		})
-})
+	const resetToken = user.getResetPasswordToken();
+  
+	await user.save({ validateBeforeSave: false });
+  
+	// Create reset password URL
+	const resetUrl = `${req.protocol}://${req.get('host')}/password/reset/${resetToken}`;
+  
+	// Configure email options
+	const mailOptions = {
+	  from: 'mohamedbenjedida18@gmail.com', // Sender email address
+	  to: email,
+	  subject: 'Password Recovery',
+	  html: `
+		<h1>Your password reset token is as follows:</h1>
+		<a href="${resetUrl}">${resetUrl}</a>
+		<hr />
+		<p>If you have not requested this email, please ignore it.</p>
+	  `
+	};
+  
+	// Send email using Nodemailer
+	transporter.sendMail(mailOptions, function(error, info) {
+	  if (error) {
+		console.error('Email sending failed:', error);
+		return next(new ErrorHandler('Failed to send password reset email', 500));
+	  } else {
+		console.log('Email sent:', info.response);
+		return res.json({
+		  message: `Email has been sent to ${email}. Follow the instructions to reset your password.`
+		});
+	  }
+	});
+  });
 
 // @desc    Reset Password
 // @route   PUT /api/password/reset/:token
