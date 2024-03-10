@@ -14,6 +14,7 @@ const {
 	getUserDetails,
 	updateUser,
 	deleteUser,
+	newsLetter
 } = require('../controllers/user')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -31,6 +32,8 @@ const {
 } = require('../validators/user')
 
 router.route('/register').post(userRegisterValidator, runValidation, register)
+router.route('/subscribe').post(newsLetter)
+
 router.route('/login').post(userLoginValidator, runValidation, login)
 router.route('/logout').get(logout)
 router.route('/password/forgot').post(userPasswordForgotValidator, runValidation, forgotPassword)
