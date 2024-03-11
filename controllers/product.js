@@ -50,14 +50,39 @@ exports.getSingleProduct = AsyncHandler(async (req, res, next) => {
 })
 
 // Get all products (Admin)  =>   /api/admin/products
-exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
-	const products = await Product.find()
+// exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
+// 	const products = await Product.find()
 
-	res.status(200).json({
-		success: true,
-		products,
-	})
-})
+// 	res.status(200).json({
+// 		success: true,
+// 		products,
+// 	})
+// })
+
+exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 5; 
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const totalProducts = await Product.countDocuments();
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const products = await Product.find().limit(limit).skip(startIndex);
+
+    const pagination = {
+        currentPage: page,
+        totalPages: totalPages,
+        totalProducts: totalProducts
+    };
+
+    res.status(200).json({
+        success: true,
+        pagination: pagination,
+        products: products
+    });
+});
 
 // @desc    Create Product
 // @route   POST /api/admin/products
