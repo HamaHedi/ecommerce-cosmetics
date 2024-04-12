@@ -250,11 +250,27 @@ exports.updateProfile = AsyncHandler(async (req, res, next) => {
 // @access  Private
 // @Role 	admin
 exports.allUsers = AsyncHandler(async (req, res, next) => {
-  const users = await User.find();
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const totalUsers = await User.countDocuments();
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  const users = await User.find().limit(limit).skip(startIndex);
+
+  const pagination = {
+    currentPage: page,
+    totalPages: totalPages,
+    totalUsers: totalUsers
+  };
 
   res.status(200).json({
     success: true,
-    users,
+    pagination: pagination,
+    users: users
   });
 });
 
