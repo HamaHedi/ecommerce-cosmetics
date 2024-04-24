@@ -69,7 +69,10 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
     const totalProducts = await Product.countDocuments();
     const totalPages = Math.ceil(totalProducts / limit);
 
-    const products = await Product.find().limit(limit).skip(startIndex);
+    const products = await Product.find()
+        .sort({ createdAt: -1 }) // Sort by createdAt field in descending order
+        .limit(limit)
+        .skip(startIndex);
 
     const pagination = {
         currentPage: page,
@@ -83,6 +86,7 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
         products: products
     });
 });
+
 
 // @desc    Create Product
 // @route   POST /api/admin/products
@@ -184,6 +188,9 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 	if (!product) {
 		return next(new ErrorHandler('Product not found', 404))
 	}
+	if (req.body.subcategory) {
+		product.subcategory = req.body.subcategory;
+	}
 
 	if (req.files) {
 		product.images.forEach(async (image) => {
@@ -257,7 +264,6 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			return next(new ErrorHandler('Error uploading files!', 400))
 		}
 	}
-
 	product = await Product.findByIdAndUpdate(req.params.id, req.body, {
 		new: true,
 		runValidators: true,

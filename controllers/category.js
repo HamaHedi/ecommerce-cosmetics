@@ -35,38 +35,48 @@ exports.createCategory = AsyncHandler(async (req, res, next) => {
 })
 
 exports.updateCategory = AsyncHandler(async (req, res, next) => {
-	let category = await Category.findById(req.params.id)
+    let category = await Category.findById(req.params.id);
 
-	if (!category) {
-		return next(new ErrorHandler('No Category found with this ID', 404))
-	}
+    if (!category) {
+        return next(new ErrorHandler('No Category found with this ID', 404));
+    }
 
-	const products = await Product.find({ category: category.title })
-	if (products) {
-		let promises = []
-		products.forEach((product) => {
-			product.category = req.body.title
-			promises.push(
-				Product.findByIdAndUpdate(product._id, product, {
-					new: true,
-					runValidators: true,
-					useFindAndModify: false,
-				})
-			)
-		})
-		await Promise.all(promises)
-	}
+    const oldTitle = category.title;
+    const newTitle = req.body.title;
 
-	await Category.findByIdAndUpdate(req.params.id, req.body, {
-		new: true,
-		runValidators: true,
-		useFindAndModify: false,
-	})
+    // Find products associated with the old subcategory
+    const products = await Product.find({ category: oldTitle });
 
-	res.status(200).json({
-		success: true,
-	})
-})
+    if (products.length > 0) {
+        let promises = [];
+
+        // Update category for each product
+        products.forEach((product) => {
+            product.category = newTitle;
+            promises.push(
+                Product.findByIdAndUpdate(product._id, product, {
+                    new: true,
+                    runValidators: true,
+                    useFindAndModify: false,
+                })
+            );
+        });
+
+        await Promise.all(promises);
+    }
+
+    // Update category document
+    await Category.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success: true,
+    });
+});
+
 
 exports.deleteCategory = AsyncHandler(async (req, res, next) => {
 	const category = await Category.findById(req.params.id)
