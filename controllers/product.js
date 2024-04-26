@@ -70,7 +70,7 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
     const totalPages = Math.ceil(totalProducts / limit);
 
     const products = await Product.find()
-        .sort({ createdAt: -1 }) // Sort by createdAt field in descending order
+        .sort({ createdAt: -1 }) 
         .limit(limit)
         .skip(startIndex);
 

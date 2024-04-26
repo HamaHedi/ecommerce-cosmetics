@@ -5,11 +5,14 @@ class APIFeatures {
 	}
 
 	search() {
+
 		const keyword = this.queryStr.keyword
 			? {
+				
 				$or: [
 					{ name: { $regex: this.queryStr.keyword, $options: 'i' } },
-					{ category: { $regex: this.queryStr.keyword, $options: 'i' } }
+					{ category: { $regex: this.queryStr.category, $options: 'i' } },
+					{ subcategory: { $regex: this.queryStr.category, $options: 'i' } }
 				]
 			}
 			: {}
@@ -19,23 +22,28 @@ class APIFeatures {
 	}
 	
 	filter() {
-		const queryCopy = { ...this.queryStr }
+		const queryCopy = { ...this.queryStr };
 	
 		// Remove fields from the query
-		const removeFields = ['keyword', 'limit', 'page']
-		removeFields.forEach((el) => delete queryCopy[el])
+		const removeFields = ['keyword', 'limit', 'page'];
+		removeFields.forEach((el) => delete queryCopy[el]);
 	
-		// Handle category filtering
-		if (queryCopy.category) {
-			this.query = this.query.find({ category: queryCopy.category })
+		// Handle subcategory filtering
+		if (queryCopy.subcategory) {
+			this.query = this.query.find({ subcategory: queryCopy.subcategory });
+		}
+	
+		// Handle category filtering if provided
+		if (queryCopy.category && !queryCopy.subcategory ) {
+			this.query = this.query.find({ category: queryCopy.category });
 		}
 	
 		// Advanced filter for price, ratings, etc.
-		let queryStr = JSON.stringify(queryCopy)
-		queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`)
+		let queryStr = JSON.stringify(queryCopy);
+		queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`);
 	
-		this.query = this.query.find(JSON.parse(queryStr))
-		return this
+		this.query = this.query.find(JSON.parse(queryStr));
+		return this;
 	}
 	
 
