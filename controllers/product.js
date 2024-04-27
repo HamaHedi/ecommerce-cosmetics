@@ -5,10 +5,55 @@ const AsyncHandler = require('express-async-handler')
 const ObjectID = require('mongodb').ObjectId
 const path = require('path')
 const fs = require('fs')
+const category = require('../models/category')
+const user = require('../models/user')
+const order = require('../models/order')
 
 // @desc    Get All Products?keyword=
 // @route   GET /api/products
 // @access  Public
+exports.getStatistics = AsyncHandler(async (req, res, next) => {
+    // Get the count of categories
+    const categoryCount = await category.countDocuments();
+
+    // Get the count of users
+    const userCount = await user.countDocuments();
+
+    // Get the count of products
+    const productCount = await Product.countDocuments();
+    
+    // Get the count of orders
+    const orderCount = await order.countDocuments();
+
+    // Get the count of products for each category
+    const categoryProductCounts = await Product.aggregate([
+        {
+            $group: {
+                _id: "$category",
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+    const outOfStockCount = await Product.countDocuments({ stock: 0 });
+
+    // Format the result to create an object with category names and their respective product counts
+    const categoryCounts = {};
+    categoryProductCounts.forEach(category => {
+        categoryCounts[category._id] = category.count;
+    });
+
+    res.status(200).json({
+        success: true,
+        categoryCount,
+        userCount,
+        productCount,
+		outOfStockCount,
+        orderCount,
+        categoryProductCounts: categoryCounts
+    });
+});
+
+
 exports.getProducts = AsyncHandler(async (req, res, next) => {
 	const resPerPage = 6
 	const productsCount = await Product.countDocuments()

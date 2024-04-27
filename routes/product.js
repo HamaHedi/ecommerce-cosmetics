@@ -11,6 +11,7 @@ const {
 	createProductReview,
 	getProductReviews,
 	deleteReview,
+	getStatistics,
 } = require('../controllers/product')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -20,6 +21,8 @@ const { runValidation } = require('../validators')
 const { productValidator, productReviewValidator } = require('../validators/product')
 
 router.route('/products').get(getProducts)
+router.route('/statistics').get(getStatistics)
+
 router.route('/products/:id').get(getSingleProduct)
 
 router.route('/admin/products').get(isAuthenticatedUser, authorizeRoles('admin'), getAdminProducts)
