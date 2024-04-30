@@ -55,7 +55,7 @@ exports.getStatistics = AsyncHandler(async (req, res, next) => {
 
 
 exports.getProducts = AsyncHandler(async (req, res, next) => {
-	const resPerPage = 6
+	const resPerPage = 8
 	const productsCount = await Product.countDocuments()
 
 	const apiFeaturesCountTest = new APIFeatures(Product.find(), req.query).search().filter()
