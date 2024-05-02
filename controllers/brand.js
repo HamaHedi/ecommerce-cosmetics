@@ -256,28 +256,29 @@ console.log(req.body)
 // // @route   DELETE /api/products/:id
 // // @access  Private
 // // @Role 	admin
-// exports.deleteProduct = AsyncHandler(async (req, res, next) => {
-// 	let product = await Product.findById(req.params.id)
+exports.deleteBrand = AsyncHandler(async (req, res, next) => {
+	console.log(req.params.id)
+	let brand = await Brand.findById(req.params.id)
+    console.log(brand)
+	if (!brand) {
+		return next(new ErrorHandler('Brand not found', 404))
+	}
 
-// 	if (!product) {
-// 		return next(new ErrorHandler('Product not found', 404))
-// 	}
+	brand.images.forEach(async (image) => {
+		let imagePath = path.join(__dirname, '../public', image.path)
 
-// 	product.images.forEach(async (image) => {
-// 		let imagePath = path.join(__dirname, '../public', image.path)
+		if (fs.existsSync(imagePath)) {
+			await fs.unlink(imagePath, async (err) => {
+				console.log('file deleted successfully')
+			})
+		}
+	})
 
-// 		if (fs.existsSync(imagePath)) {
-// 			await fs.unlink(imagePath, async (err) => {
-// 				console.log('file deleted successfully')
-// 			})
-// 		}
-// 	})
+	await brand.remove()
 
-// 	await product.remove()
-
-// 	res.status(200).json({
-// 		success: true,
-// 		message: 'Product deleted successfully',
-// 	})
-// })
+	res.status(200).json({
+		success: true,
+		message: 'Brand deleted successfully',
+	})
+})
 

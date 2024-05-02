@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
-const { getBrands, getSingleBrand, createBrand } = require('../controllers/brand')
+const { getBrands, getSingleBrand, createBrand, deleteBrand } = require('../controllers/brand')
 
 router.route('/brands').get(getBrands)
 
@@ -21,7 +21,7 @@ router
 // 		authorizeRoles('admin'),
 // 		updateB
 // 	)
-// 	.delete(isAuthenticatedUser, authorizeRoles('admin'), deleteProduct)
+router.route("/brands/:id").delete(isAuthenticatedUser, authorizeRoles('admin'), deleteBrand)
 
 
 module.exports = router
