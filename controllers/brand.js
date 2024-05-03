@@ -142,120 +142,114 @@ console.log(req.body)
 	}
 })
 
-// @desc    Update Product
+// @desc    Update Brnad
 // @route   PUT /api/admin/products/:id
 // @access  Private
 // @Role 	admin
-// exports.updateProduct = AsyncHandler(async (req, res, next) => {
-// 	let product = await Product.findById(req.params.id)
+exports.updateBrand = AsyncHandler(async (req, res, next) => {
+	let brand = await Brand.findById(req.params.id)
 
-// 	if (!product) {
-// 		return next(new ErrorHandler('Product not found', 404))
-// 	}
-// 	if (req.body.subcategory) {
-// 		product.subcategory = req.body.subcategory;
-// 	}
+	if (!brand) {
+		return next(new ErrorHandler('Brand not found', 404))
+	}
 
-// 	if (req.files) {
-// 		product.images.forEach(async (image) => {
-// 			let imagePath = path.join(__dirname, '../public', image.path)
+	if (req.files) {
+		brand.images.forEach(async (image) => {
+			let imagePath = path.join(__dirname, '../public', image.path)
 
-// 			if (fs.existsSync(imagePath)) {
-// 				await fs.unlink(imagePath, async (err) => {
-// 					console.log('file deleted successfully')
-// 				})
-// 			}
-// 		})
+			if (fs.existsSync(imagePath)) {
+				await fs.unlink(imagePath, async (err) => {
+					console.log('file deleted successfully')
+				})
+			}
+		})
 
-// 		try {
-// 			const files = req.files.files
-// 			let images = []
+		try {
+			const files = req.files.files
+			let images = []
 
-// 			if (Array.isArray(files)) {
-// 				//multiple files
-// 				let promises = []
+			if (Array.isArray(files)) {
+				//multiple files
+				let promises = []
 
-// 				files.forEach((file) => {
-// 					if (check(file)) {
-// 						const fileName =
-// 							path.parse(file.name).name +
-// 							'-' +
-// 							Date.now() +
-// 							'-' +
-// 							Math.round(Math.random() * 1e9) +
-// 							path.extname(file.name)
+				files.forEach((file) => {
+					if (check(file)) {
+						const fileName =
+							path.parse(file.name).name +
+							'-' +
+							Date.now() +
+							'-' +
+							Math.round(Math.random() * 1e9) +
+							path.extname(file.name)
 
-// 						const savePath = path.join(__dirname, '../public', 'products', fileName)
+						const savePath = path.join(__dirname, '../public', 'brands', fileName)
 
-// 						promises.push(file.mv(savePath))
+						promises.push(file.mv(savePath))
 
-// 						images.push({
-// 							filename: fileName,
-// 							path: '/products/' + fileName,
-// 						})
-// 					}
-// 				})
+						images.push({
+							filename: fileName,
+							path: '/brands/' + fileName,
+						})
+					}
+				})
 
-// 				await Promise.all(promises)
-// 			} else {
-// 				// single file
-// 				if (check(files)) {
-// 					const fileName =
-// 						path.parse(files.name).name +
-// 						'-' +
-// 						Date.now() +
-// 						'-' +
-// 						Math.round(Math.random() * 1e9) +
-// 						path.extname(files.name)
+				await Promise.all(promises)
+			} else {
+				// single file
+				if (check(files)) {
+					const fileName =
+						path.parse(files.name).name +
+						'-' +
+						Date.now() +
+						'-' +
+						Math.round(Math.random() * 1e9) +
+						path.extname(files.name)
 
-// 					const savePath = path.join(__dirname, '../public', 'products', fileName)
+					const savePath = path.join(__dirname, '../public', 'brands', fileName)
 
-// 					await files.mv(savePath)
+					await files.mv(savePath)
 
-// 					images.push({
-// 						filename: fileName,
-// 						path: '/products/' + fileName,
-// 					})
-// 				}
-// 			}
+					images.push({
+						filename: fileName,
+						path: '/brands/' + fileName,
+					})
+				}
+			}
 
-// 			if (images.length === 0) {
-// 				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400))
-// 			}
+			if (images.length === 0) {
+				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400))
+			}
 
-// 			req.body.images = images
-// 		} catch (error) {
-// 			return next(new ErrorHandler('Error uploading files!', 400))
-// 		}
-// 	}
-// 	product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-// 		new: true,
-// 		runValidators: true,
-// 		useFindAndModify: false,
-// 	})
+			req.body.images = images
+		} catch (error) {
+			return next(new ErrorHandler('Error uploading files!', 400))
+		}
+	}
+	brand = await Brand.findByIdAndUpdate(req.params.id, req.body, {
+		new: true,
+		runValidators: true,
+		useFindAndModify: false,
+	})
 
-// 	res.status(200).json({
-// 		success: true,
-// 		product,
-// 	})
+	res.status(200).json({
+		success: true,
+		brand,
+	})
 
-// 	function check(file) {
-// 		if (
-// 			(file.mimetype === 'image/png' ||
-// 				file.mimetype === 'image/jpg' ||
-// 				file.mimetype === 'image/jpeg') &&
-// 			!file.truncated
-// 		) {
-// 			return true
-// 		}
-// 		return false
-// 	}
-// })
+	function check(file) {
+		if (
+			(file.mimetype === 'image/png' ||
+				file.mimetype === 'image/jpg' ||
+				file.mimetype === 'image/jpeg') &&
+			!file.truncated
+		) {
+			return true
+		}
+		return false
+	}
+})
 
-// // @desc    Delete Product
-// // @route   DELETE /api/products/:id
-// // @access  Private
-// // @Role 	admin
+
 exports.deleteBrand = AsyncHandler(async (req, res, next) => {
 	console.log(req.params.id)
 	let brand = await Brand.findById(req.params.id)
