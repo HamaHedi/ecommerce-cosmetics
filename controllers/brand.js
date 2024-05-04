@@ -152,6 +152,29 @@ exports.updateBrand = AsyncHandler(async (req, res, next) => {
 	if (!brand) {
 		return next(new ErrorHandler('Brand not found', 404))
 	}
+	const oldTitle = brand.title;
+    const newTitle = req.body.title;
+
+    // Find products associated with the old subcategory
+    const products = await Product.find({ brand: oldTitle });
+
+    if (products.length > 0) {
+        let promises = [];
+
+        // Update category for each product
+        products.forEach((product) => {
+            product.category = newTitle;
+            promises.push(
+                Product.findByIdAndUpdate(product._id, product, {
+                    new: true,
+                    runValidators: true,
+                    useFindAndModify: false,
+                })
+            );
+        });
+
+        await Promise.all(promises);
+    }
 
 	if (req.files) {
 		brand.images.forEach(async (image) => {
@@ -250,29 +273,34 @@ exports.updateBrand = AsyncHandler(async (req, res, next) => {
 })
 
 
+
+
 exports.deleteBrand = AsyncHandler(async (req, res, next) => {
-	console.log(req.params.id)
-	let brand = await Brand.findById(req.params.id)
-    console.log(brand)
+	const brand = await Brand.findById(req.params.id)
+
 	if (!brand) {
-		return next(new ErrorHandler('Brand not found', 404))
+		return next(new ErrorHandler('No Brand found with this ID', 404))
 	}
 
-	brand.images.forEach(async (image) => {
-		let imagePath = path.join(__dirname, '../public', image.path)
-
-		if (fs.existsSync(imagePath)) {
-			await fs.unlink(imagePath, async (err) => {
-				console.log('file deleted successfully')
-			})
-		}
-	})
+	const products = await Product.find({ brand: brand.title })
+	if (products) {
+		let promises = []
+		products.forEach((product) => {
+			product.brand = ''
+			promises.push(
+				Product.findByIdAndUpdate(product._id, product, {
+					new: true,
+					runValidators: true,
+					useFindAndModify: false,
+				})
+			)
+		})
+		await Promise.all(promises)
+	}
 
 	await brand.remove()
 
 	res.status(200).json({
 		success: true,
-		message: 'Brand deleted successfully',
 	})
 })
-
