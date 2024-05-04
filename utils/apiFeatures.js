@@ -37,6 +37,9 @@ class APIFeatures {
 		if (queryCopy.category && !queryCopy.subcategory ) {
 			this.query = this.query.find({ category: queryCopy.category });
 		}
+		if (queryCopy.brands  ) {
+			this.query = this.query.find({ brand: queryCopy.brand });
+		}
 	
 		// Advanced filter for price, ratings, etc.
 		let queryStr = JSON.stringify(queryCopy);
