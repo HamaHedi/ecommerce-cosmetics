@@ -11,28 +11,35 @@ const Brand = require('../models/brand')
 
 
 exports.getBrands = AsyncHandler(async (req, res, next) => {
-	const resPerPage = 8
-	const brandsCount = await Brand.countDocuments()
+    const brandsCount = await Brand.countDocuments();
 
-	const apiFeaturesCountTest = new APIFeatures(Brand.find(), req.query).search().filter()
-	const brandsCountTest = await apiFeaturesCountTest.query
-	const filteredBrandsCount = brandsCountTest.length
+    const apiFeatures = new APIFeatures(Brand.find(), req.query)
+        .search()
+        .filter();
 
-	const apiFeatures = new APIFeatures(Brand.find(), req.query)
-		.search()
-		.filter()
-		.pagination(resPerPage)
+    const brands = await apiFeatures.query;
 
-	const brands = await apiFeatures.query
+    const uniqueBrandNames = await Product.distinct('brand');
 
-	res.status(200).json({
-		success: true,
-		brandsCount,
-		resPerPage,
-		filteredBrandsCount,
-		brands,
-	})
-})
+    const brandProductCounts = {};
+
+    for (const brandName of uniqueBrandNames) {
+        const productCount = await Product.countDocuments({ brand: brandName });
+        brandProductCounts[brandName] = productCount;
+    }
+
+    const brandsWithProductCount = brands.map((brand) => ({
+        ...brand.toObject(),
+        productCount: brandProductCounts[brand.title] || 0, 
+    }));
+
+    res.status(200).json({
+        success: true,
+        brandsCount,
+        brands: brandsWithProductCount,
+    });
+});
+
 
 // @desc    Get Single Product
 // @route   GET /api/products/:id
