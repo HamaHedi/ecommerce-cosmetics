@@ -13,6 +13,10 @@ const brandSchema = new mongoose.Schema(
             type: String,
             required: false,
         },
+        category: {
+            type: String,
+            required: true,
+        },
         images: [
 			{
 				filename: {
