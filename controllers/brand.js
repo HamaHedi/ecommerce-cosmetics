@@ -39,7 +39,7 @@ exports.getBrands = AsyncHandler(async (req, res, next) => {
   // Add product counts to the brand objects
   const brandsWithProductCount = brands.map((brand) => ({
     ...brand.toObject(),
-    productCount: brandProductCounts[brand.title] || 0, // Default to 0 if no products found for the brand
+    productCount: brandProductCounts[brand.title] || 0, 
   }));
 
   // Send the response with brands and counts

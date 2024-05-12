@@ -61,7 +61,6 @@ exports.getProducts = AsyncHandler(async (req, res, next) => {
 	const apiFeaturesCountTest = new APIFeatures(Product.find(), req.query).search().filter()
 	const productsCountTest = await apiFeaturesCountTest.query
 	const filteredProductsCount = productsCountTest.length
-
 	const apiFeatures = new APIFeatures(Product.find(), req.query)
 		.search()
 		.filter()

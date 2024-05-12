@@ -7,12 +7,13 @@ class APIFeatures {
 	search() {
 
 		const keyword = this.queryStr.keyword
+		
 			? {
 				
 				$or: [
-					{ name: { $regex: this.queryStr.keyword, $options: 'i' } },
-					{ category: { $regex: this.queryStr.category, $options: 'i' } },
-					{ subcategory: { $regex: this.queryStr.category, $options: 'i' } }
+					{ name: { $regex:this.queryStr.keyword, $options: 'i' } },
+					// { category: { $regex: this.queryStr.category, $options: 'i' } },
+					// { subcategory: { $regex: this.queryStr.category, $options: 'i' } }
 				]
 			}
 			: {}
@@ -23,7 +24,8 @@ class APIFeatures {
 	
 	filter() {
 		const queryCopy = { ...this.queryStr };
-	
+		console.log('Keyword:*********************',queryCopy);
+
 		// Remove fields from the query
 		const removeFields = ['keyword', 'limit', 'page'];
 		removeFields.forEach((el) => delete queryCopy[el]);
@@ -37,7 +39,7 @@ class APIFeatures {
 		if (queryCopy.category && !queryCopy.subcategory ) {
 			this.query = this.query.find({ category: queryCopy.category });
 		}
-		if (queryCopy.brands  ) {
+		if (queryCopy.brand) {
 			this.query = this.query.find({ brand: queryCopy.brand });
 		}
 	
