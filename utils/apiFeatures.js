@@ -24,7 +24,6 @@ class APIFeatures {
 	
 	filter() {
 		const queryCopy = { ...this.queryStr };
-		console.log('Keyword:*********************',queryCopy);
 
 		// Remove fields from the query
 		const removeFields = ['keyword', 'limit', 'page'];

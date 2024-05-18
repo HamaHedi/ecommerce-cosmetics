@@ -12,6 +12,7 @@ const {
 	getProductReviews,
 	deleteReview,
 	getStatistics,
+	getPromoProducts
 } = require('../controllers/product')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -22,6 +23,7 @@ const { productValidator, productReviewValidator } = require('../validators/prod
 
 router.route('/products').get(getProducts)
 router.route('/statistics').get(getStatistics)
+router.route('/products-promo').get(getPromoProducts)
 
 router.route('/products/:id').get(getSingleProduct)
 

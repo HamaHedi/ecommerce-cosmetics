@@ -76,7 +76,19 @@ exports.getProducts = AsyncHandler(async (req, res, next) => {
 		products,
 	})
 })
+exports.getPromoProducts = AsyncHandler(async (req, res, next) => {
+    const limit = 20;
 
+    const promoProducts = await Product.find({ oldPrice: { $gt: 0 } })
+        .sort({ createdAt: -1 })  // Sort by newest first
+        .limit(limit);
+
+    res.status(200).json({
+        success: true,
+        count: promoProducts.length,
+        promoProducts,
+    });
+});
 // @desc    Get Single Product
 // @route   GET /api/products/:id
 // @access  Public
