@@ -20,7 +20,7 @@ exports.createMessage = AsyncHandler(async (req, res, next) => {
   
     res.status(201).json({
       success: true,
-      data: newMessage,
+      message: "Message sent successfully",
     });
   });
 
