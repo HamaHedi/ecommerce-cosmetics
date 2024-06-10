@@ -148,202 +148,221 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 // @route   POST /api/admin/products
 // @access  Private
 // @Role 	admin
+
 exports.createProduct = AsyncHandler(async (req, res, next) => {
 	if (!req.files) {
-		return next(new ErrorHandler('No image uploaded!', 400))
+	  return next(new ErrorHandler('No image uploaded!', 400));
 	}
-
+  
 	try {
-		const files = req.files.files
-		let images = []
-
-		if (Array.isArray(files)) {
-			//multiple files
-			let promises = []
-
-			files.forEach((file) => {
-				if (check(file)) {
-					const fileName =
-						path.parse(file.name).name +
-						'-' +
-						Date.now() +
-						'-' +
-						Math.round(Math.random() * 1e9) +
-						path.extname(file.name)
-
-					const savePath = path.join(__dirname, '../public', 'products', fileName)
-
-					promises.push(file.mv(savePath))
-
-					images.push({
-						filename: fileName,
-						path: '/products/' + fileName,
-					})
-				}
-			})
-
-			await Promise.all(promises)
-		} else {
-			// single file
-			if (check(files)) {
-				const fileName =
-					path.parse(files.name).name +
-					'-' +
-					Date.now() +
-					'-' +
-					Math.round(Math.random() * 1e9) +
-					path.extname(files.name)
-
-				const savePath = path.join(__dirname, '../public', 'products', fileName)
-
-				await files.mv(savePath)
-
-				images.push({
-					filename: fileName,
-					path: '/products/' + fileName,
-				})
-			}
+	  const files = req.files.files;
+	  let images = [];
+  
+	  if (Array.isArray(files)) {
+		// Multiple files
+		let promises = [];
+  
+		files.forEach((file) => {
+		  if (check(file)) {
+			const fileName =
+			  path.parse(file.name).name +
+			  '-' +
+			  Date.now() +
+			  '-' +
+			  Math.round(Math.random() * 1e9) +
+			  path.extname(file.name);
+  
+			const savePath = path.join(__dirname, '../public', 'products', fileName);
+  
+			promises.push(file.mv(savePath));
+  
+			images.push({
+			  filename: fileName,
+			  path: '/products/' + fileName,
+			});
+		  }
+		});
+  
+		await Promise.all(promises);
+	  } else {
+		// Single file
+		if (check(files)) {
+		  const fileName =
+			path.parse(files.name).name +
+			'-' +
+			Date.now() +
+			'-' +
+			Math.round(Math.random() * 1e9) +
+			path.extname(files.name);
+  
+		  const savePath = path.join(__dirname, '../public', 'products', fileName);
+  
+		  await files.mv(savePath);
+  
+		  images.push({
+			filename: fileName,
+			path: '/products/' + fileName,
+		  });
 		}
-
-		if (images.length === 0) {
-			return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400))
+	  }
+  
+	  if (images.length === 0) {
+		return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+	  }
+  
+	  req.body.images = images;
+  
+	  // Parse the colors field from JSON string
+	  if (req.body.colors) {
+		try {
+		  req.body.colors = JSON.parse(req.body.colors);
+		} catch (error) {
+		  return next(new ErrorHandler('Invalid colors format!', 400));
 		}
-
-		req.body.images = images
-
-		const product = await Product.create(req.body)
-
-		res.status(201).json({
-			success: true,
-			product,
-		})
+	  }
+  
+	  const product = await Product.create(req.body);
+  
+	  res.status(201).json({
+		success: true,
+		product,
+	  });
 	} catch (error) {
-		return next(new ErrorHandler('Error uploading files!', 400))
+	  return next(new ErrorHandler('Error uploading files!', 400));
 	}
-
+  
 	function check(file) {
-		if (
-			(file.mimetype === 'image/png' ||
-				file.mimetype === 'image/jpg' ||
-				file.mimetype === 'image/jpeg') &&
-			!file.truncated
-		) {
-			return true
-		}
-		return false
+	  if (
+		(file.mimetype === 'image/png' ||
+		  file.mimetype === 'image/jpg' ||
+		  file.mimetype === 'image/jpeg') &&
+		!file.truncated
+	  ) {
+		return true;
+	  }
+	  return false;
 	}
-})
+  });
 
 // @desc    Update Product
 // @route   PUT /api/admin/products/:id
 // @access  Private
 // @Role 	admin
 exports.updateProduct = AsyncHandler(async (req, res, next) => {
-	let product = await Product.findById(req.params.id)
-
+	let product = await Product.findById(req.params.id);
+  
 	if (!product) {
-		return next(new ErrorHandler('Product not found', 404))
+	  return next(new ErrorHandler('Product not found', 404));
 	}
+  
+	// Handle subcategory update
 	if (req.body.subcategory) {
-		product.subcategory = req.body.subcategory;
+	  product.subcategory = req.body.subcategory;
 	}
-
+  
+	// Handle image deletion and uploading new images
 	if (req.files) {
-		product.images.forEach(async (image) => {
-			let imagePath = path.join(__dirname, '../public', image.path)
-
-			if (fs.existsSync(imagePath)) {
-				await fs.unlink(imagePath, async (err) => {
-					console.log('file deleted successfully')
-				})
-			}
-		})
-
-		try {
-			const files = req.files.files
-			let images = []
-
-			if (Array.isArray(files)) {
-				//multiple files
-				let promises = []
-
-				files.forEach((file) => {
-					if (check(file)) {
-						const fileName =
-							path.parse(file.name).name +
-							'-' +
-							Date.now() +
-							'-' +
-							Math.round(Math.random() * 1e9) +
-							path.extname(file.name)
-
-						const savePath = path.join(__dirname, '../public', 'products', fileName)
-
-						promises.push(file.mv(savePath))
-
-						images.push({
-							filename: fileName,
-							path: '/products/' + fileName,
-						})
-					}
-				})
-
-				await Promise.all(promises)
-			} else {
-				// single file
-				if (check(files)) {
-					const fileName =
-						path.parse(files.name).name +
-						'-' +
-						Date.now() +
-						'-' +
-						Math.round(Math.random() * 1e9) +
-						path.extname(files.name)
-
-					const savePath = path.join(__dirname, '../public', 'products', fileName)
-
-					await files.mv(savePath)
-
-					images.push({
-						filename: fileName,
-						path: '/products/' + fileName,
-					})
-				}
-			}
-
-			if (images.length === 0) {
-				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400))
-			}
-
-			req.body.images = images
-		} catch (error) {
-			return next(new ErrorHandler('Error uploading files!', 400))
+	  product.images.forEach(async (image) => {
+		let imagePath = path.join(__dirname, '../public', image.path);
+		if (fs.existsSync(imagePath)) {
+		  await fs.unlink(imagePath, (err) => {
+			if (err) console.log('Error deleting file:', err);
+			else console.log('File deleted successfully');
+		  });
 		}
+	  });
+  
+	  try {
+		const files = req.files.files;
+		let images = [];
+  
+		if (Array.isArray(files)) {
+		  let promises = [];
+		  files.forEach((file) => {
+			if (check(file)) {
+			  const fileName =
+				path.parse(file.name).name +
+				'-' +
+				Date.now() +
+				'-' +
+				Math.round(Math.random() * 1e9) +
+				path.extname(file.name);
+  
+			  const savePath = path.join(__dirname, '../public', 'products', fileName);
+			  promises.push(file.mv(savePath));
+  
+			  images.push({
+				filename: fileName,
+				path: '/products/' + fileName,
+			  });
+			}
+		  });
+  
+		  await Promise.all(promises);
+		} else {
+		  if (check(files)) {
+			const fileName =
+			  path.parse(files.name).name +
+			  '-' +
+			  Date.now() +
+			  '-' +
+			  Math.round(Math.random() * 1e9) +
+			  path.extname(files.name);
+  
+			const savePath = path.join(__dirname, '../public', 'products', fileName);
+			await files.mv(savePath);
+  
+			images.push({
+			  filename: fileName,
+			  path: '/products/' + fileName,
+			});
+		  }
+		}
+  
+		if (images.length === 0) {
+		  return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+		}
+  
+		req.body.images = images;
+	  } catch (error) {
+		return next(new ErrorHandler('Error uploading files!', 400));
+	  }
 	}
+  
+	// Parse the colors field from JSON string
+	if (req.body.colors) {
+	  try {
+		req.body.colors = JSON.parse(req.body.colors);
+	  } catch (error) {
+		return next(new ErrorHandler('Invalid colors format!', 400));
+	  }
+	}
+  
+	// Update product
 	product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-		new: true,
-		runValidators: true,
-		useFindAndModify: false,
-	})
-
+	  new: true,
+	  runValidators: true,
+	  useFindAndModify: false,
+	});
+  
 	res.status(200).json({
-		success: true,
-		product,
-	})
-
+	  success: true,
+	  product,
+	});
+  
 	function check(file) {
-		if (
-			(file.mimetype === 'image/png' ||
-				file.mimetype === 'image/jpg' ||
-				file.mimetype === 'image/jpeg') &&
-			!file.truncated
-		) {
-			return true
-		}
-		return false
+	  if (
+		(file.mimetype === 'image/png' ||
+		  file.mimetype === 'image/jpg' ||
+		  file.mimetype === 'image/jpeg') &&
+		!file.truncated
+	  ) {
+		return true;
+	  }
+	  return false;
 	}
-})
-
+  });
+  
 // @desc    Delete Product
 // @route   DELETE /api/products/:id
 // @access  Private
