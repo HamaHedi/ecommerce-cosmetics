@@ -1,15 +1,15 @@
 const mongoose = require('mongoose')
 const colorSchema = new mongoose.Schema({
 	name: {
-	  type: String,
-	  required: true,
+		type: String,
+		required: true,
 	},
 	value: {
-	  type: String,
-	  required: true,
+		type: String,
+		required: true,
 	}
-  });
-  
+});
+
 const productSchema = new mongoose.Schema(
 	{
 		name: {
@@ -23,10 +23,11 @@ const productSchema = new mongoose.Schema(
 			maxLength: 5,
 			default: 0.0,
 		},
-	    colors: {
+
+		colors: {
 			type: [colorSchema],
 			required: false,
-		  },
+		},
 		price: {
 			type: Number,
 			required: true,
@@ -107,6 +108,12 @@ const productSchema = new mongoose.Schema(
 		user: {
 			type: mongoose.Schema.ObjectId,
 			ref: 'User',
+		},
+		isNew: {
+			required: true,
+
+			type: Boolean,
+			default: false,
 		},
 	},
 	{
