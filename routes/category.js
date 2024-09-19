@@ -32,7 +32,6 @@ router
 	.put(
 		isAuthenticatedUser,
 		authorizeRoles('admin'),
-		categoryValidator,
 		runValidation,
 		updateCategory
 	)

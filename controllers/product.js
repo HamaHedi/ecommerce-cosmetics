@@ -163,7 +163,6 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 	if (!req.files) {
 		return next(new ErrorHandler('No image uploaded!', 400));
 	}
-	console.log(req.body)
 	try {
 		const files = req.files.files;
 		let images = [];

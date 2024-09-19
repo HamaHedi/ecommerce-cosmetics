@@ -35,46 +35,46 @@ exports.createCategory = AsyncHandler(async (req, res, next) => {
 })
 
 exports.updateCategory = AsyncHandler(async (req, res, next) => {
-    let category = await Category.findById(req.params.id);
+	let category = await Category.findById(req.params.id);
 
-    if (!category) {
-        return next(new ErrorHandler('No Category found with this ID', 404));
-    }
+	if (!category) {
+		return next(new ErrorHandler('No Category found with this ID', 404));
+	}
 
-    const oldTitle = category.title;
-    const newTitle = req.body.title;
+	const oldTitle = category.title;
+	const newTitle = req.body.title;
 
-    // Find products associated with the old subcategory
-    const products = await Product.find({ category: oldTitle });
+	// Find products associated with the old subcategory
+	const products = await Product.find({ category: oldTitle });
 
-    if (products.length > 0) {
-        let promises = [];
+	if (products.length > 0) {
+		let promises = [];
 
-        // Update category for each product
-        products.forEach((product) => {
-            product.category = newTitle;
-            promises.push(
-                Product.findByIdAndUpdate(product._id, product, {
-                    new: true,
-                    runValidators: true,
-                    useFindAndModify: false,
-                })
-            );
-        });
+		// Update category for each product
+		products.forEach((product) => {
+			product.category = newTitle;
+			promises.push(
+				Product.findByIdAndUpdate(product._id, product, {
+					new: true,
+					runValidators: true,
+					useFindAndModify: false,
+				})
+			);
+		});
 
-        await Promise.all(promises);
-    }
+		await Promise.all(promises);
+	}
 
-    // Update category document
-    await Category.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-        useFindAndModify: false,
-    });
+	// Update category document
+	await Category.findByIdAndUpdate(req.params.id, req.body, {
+		new: true,
+		runValidators: true,
+		useFindAndModify: false,
+	});
 
-    res.status(200).json({
-        success: true,
-    });
+	res.status(200).json({
+		success: true,
+	});
 });
 
 
