@@ -54,6 +54,18 @@ const productSchema = new mongoose.Schema(
 				},
 			},
 		],
+		certificates: [
+			{
+				filename: {
+					type: String,
+					required: false,
+				},
+				path: {
+					type: String,
+					required: false,
+				},
+			},
+		],
 		category: {
 			type: String,
 			required: false,

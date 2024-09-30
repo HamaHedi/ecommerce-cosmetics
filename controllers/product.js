@@ -164,9 +164,15 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		return next(new ErrorHandler('No image uploaded!', 400));
 	}
 	try {
+		console.log('sasasdadsasd', req.files)
+		console.log('certificates', req.files.certificates)
+
 		const files = req.files.files;
 		let images = [];
+		const certificatess = req.files.certificates; // Checking if certificates are provided
+		let certificates = [];
 
+		// Process image files
 		if (Array.isArray(files)) {
 			// Multiple files
 			let promises = [];
@@ -215,11 +221,65 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 			}
 		}
 
+		// Only process certificates if they are provided
+		if (certificatess) {
+			if (Array.isArray(certificatess)) {
+				// Multiple files
+				let promises = [];
+
+				certificatess.forEach((file) => {
+					if (check(file)) {
+						const fileName =
+							path.parse(file.name).name +
+							'-' +
+							Date.now() +
+							'-' +
+							Math.round(Math.random() * 1e9) +
+							path.extname(file.name);
+
+						const savePath = path.join(__dirname, '../public', 'certificates', fileName);
+
+						promises.push(file.mv(savePath));
+
+						certificates.push({
+							filename: fileName,
+							path: '/certificates/' + fileName,
+						});
+					}
+				});
+
+				await Promise.all(promises);
+			} else {
+				// Single file
+				if (check(certificatess)) {
+					const fileName =
+						path.parse(certificatess.name).name +
+						'-' +
+						Date.now() +
+						'-' +
+						Math.round(Math.random() * 1e9) +
+						path.extname(certificatess.name);
+
+					const savePath = path.join(__dirname, '../public', 'certificates', fileName);
+
+					await certificatess.mv(savePath);
+
+					certificates.push({
+						filename: fileName,
+						path: '/certificates/' + fileName,
+					});
+				}
+			}
+		}
+
+		// Check for images validity
 		if (images.length === 0) {
 			return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
 		}
 
+		// Attach images and certificates to the request body
 		req.body.images = images;
+		req.body.certificates = certificates;
 
 		// Parse the colors field from JSON string
 		if (req.body?.colors) {
@@ -230,8 +290,10 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 			}
 		}
 
+		// Create the product
 		const product = await Product.create(req.body);
 
+		// Send the response
 		res.status(201).json({
 			success: true,
 			product,
@@ -240,6 +302,7 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		return next(new ErrorHandler('Error uploading files!', 400));
 	}
 
+	// Helper function to validate file types
 	function check(file) {
 		if (
 			(file.mimetype === 'image/png' ||
@@ -252,6 +315,7 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		return false;
 	}
 });
+
 
 // @desc    Update Product
 // @route   PUT /api/admin/products/:id
