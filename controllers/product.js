@@ -333,7 +333,7 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 	}
 
 	// Handle image deletion and uploading new images
-	if (req.files) {
+	if (req.files.files) {
 		product.images.forEach(async (image) => {
 			let imagePath = path.join(__dirname, '../public', image.path);
 			if (fs.existsSync(imagePath)) {
@@ -400,7 +400,73 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			return next(new ErrorHandler('Error uploading files!', 400));
 		}
 	}
+	if (req.files.certificates) {
+		product.certificates.forEach(async (image) => {
+			let imagePath = path.join(__dirname, '../public', image.path);
+			if (fs.existsSync(imagePath)) {
+				await fs.unlink(imagePath, (err) => {
+					if (err) console.log('Error deleting file:', err);
+					else console.log('File deleted successfully');
+				});
+			}
+		});
 
+		try {
+			const files = req.files.certificates;
+			let images = [];
+
+			if (Array.isArray(files)) {
+				let promises = [];
+				files.forEach((file) => {
+					if (check(file)) {
+						const fileName =
+							path.parse(file.name).name +
+							'-' +
+							Date.now() +
+							'-' +
+							Math.round(Math.random() * 1e9) +
+							path.extname(file.name);
+
+						const savePath = path.join(__dirname, '../public', 'certificates', fileName);
+						promises.push(file.mv(savePath));
+
+						images.push({
+							filename: fileName,
+							path: '/certificates/' + fileName,
+						});
+					}
+				});
+
+				await Promise.all(promises);
+			} else {
+				if (check(files)) {
+					const fileName =
+						path.parse(files.name).name +
+						'-' +
+						Date.now() +
+						'-' +
+						Math.round(Math.random() * 1e9) +
+						path.extname(files.name);
+
+					const savePath = path.join(__dirname, '../public', 'certificates', fileName);
+					await files.mv(savePath);
+
+					images.push({
+						filename: fileName,
+						path: '/certificates/' + fileName,
+					});
+				}
+			}
+
+			if (images.length === 0) {
+				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+			}
+
+			req.body.certificates = images;
+		} catch (error) {
+			return next(new ErrorHandler('Error uploading files!', 400));
+		}
+	}
 	// Parse the colors field from JSON string
 	if (req.body.colors) {
 		try {
