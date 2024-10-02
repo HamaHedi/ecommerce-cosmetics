@@ -333,7 +333,7 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 	}
 
 	// Handle image deletion and uploading new images
-	if (req.files.files) {
+	if (req.files?.files) {
 		product.images.forEach(async (image) => {
 			let imagePath = path.join(__dirname, '../public', image.path);
 			if (fs.existsSync(imagePath)) {
@@ -400,7 +400,7 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			return next(new ErrorHandler('Error uploading files!', 400));
 		}
 	}
-	if (req.files.certificates) {
+	if (req.files?.certificates) {
 		product.certificates.forEach(async (image) => {
 			let imagePath = path.join(__dirname, '../public', image.path);
 			if (fs.existsSync(imagePath)) {
