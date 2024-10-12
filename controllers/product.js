@@ -288,7 +288,13 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 				return next(new ErrorHandler('Invalid colors format!', 400));
 			}
 		}
-
+		if (req.body?.sizes) {
+			try {
+				req.body.sizes = JSON.parse(req.body.sizes);
+			} catch (error) {
+				return next(new ErrorHandler('Invalid sizes', 400));
+			}
+		}
 		// Create the product
 		const product = await Product.create(req.body);
 
@@ -475,7 +481,13 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			return next(new ErrorHandler('Invalid colors format!', 400));
 		}
 	}
-
+	if (req.body?.sizes) {
+		try {
+			req.body.sizes = JSON.parse(req.body.sizes);
+		} catch (error) {
+			return next(new ErrorHandler('Invalid sizes', 400));
+		}
+	}
 	// Update product
 	product = await Product.findByIdAndUpdate(req.params.id, req.body, {
 		new: true,

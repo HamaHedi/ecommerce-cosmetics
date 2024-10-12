@@ -121,6 +121,21 @@ const productSchema = new mongoose.Schema(
 				},
 			},
 		],
+		sizes: [
+			{
+
+				sizeName: {
+					type: String,
+					required: true,
+				},
+
+
+				sizePrice: {
+					type: String,
+					required: true,
+				},
+			},
+		],
 		user: {
 			type: mongoose.Schema.ObjectId,
 			ref: 'User',
