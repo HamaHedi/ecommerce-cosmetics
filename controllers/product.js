@@ -128,14 +128,19 @@ exports.getSingleProduct = AsyncHandler(async (req, res, next) => {
 exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 	const page = parseInt(req.query.page) || 1;
 	const limit = parseInt(req.query.limit) || 5;
-
+	const searchQuery = req.query.search || ''; // Get search query from request
 	const startIndex = (page - 1) * limit;
 	const endIndex = page * limit;
 
-	const totalProducts = await Product.countDocuments();
+	// Create a filter for searching by name, using a case-insensitive regex
+	const searchFilter = searchQuery ? { name: { $regex: searchQuery, $options: 'i' } } : {};
+
+	// Get total count of products matching the search query
+	const totalProducts = await Product.countDocuments(searchFilter);
 	const totalPages = Math.ceil(totalProducts / limit);
 
-	const products = await Product.find()
+	// Fetch products with pagination and search filtering
+	const products = await Product.find(searchFilter)
 		.sort({ createdAt: -1 })
 		.limit(limit)
 		.skip(startIndex);
@@ -152,6 +157,7 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 		products: products
 	});
 });
+
 
 
 // @desc    Create Product
