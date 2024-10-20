@@ -9,6 +9,16 @@ const colorSchema = new mongoose.Schema({
 		required: true,
 	}
 });
+const teaintSchema = new mongoose.Schema({
+	name: {
+		type: String,
+		required: true,
+	},
+	value: {
+		type: String,
+		required: true,
+	}
+});
 
 const productSchema = new mongoose.Schema(
 	{
@@ -30,6 +40,11 @@ const productSchema = new mongoose.Schema(
 
 		colors: {
 			type: [colorSchema],
+			required: false,
+		},
+		teints: {
+			type: String,
+
 			required: false,
 		},
 		price: {
