@@ -47,6 +47,14 @@ const orderSchema = mongoose.Schema(
 					type: Number,
 					required: true,
 				},
+				color: {
+					type: String,
+					required: false,
+				},
+				size: {
+					type: String,
+					required: false,
+				},
 				product: {
 					type: mongoose.Schema.Types.ObjectId,
 					required: true,
