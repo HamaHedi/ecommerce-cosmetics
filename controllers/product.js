@@ -8,6 +8,7 @@ const fs = require('fs')
 const category = require('../models/category')
 const user = require('../models/user')
 const order = require('../models/order')
+const { notifyLowStock } = require('./notification')
 
 // @desc    Get All Products?keyword=
 // @route   GET /api/products
@@ -86,6 +87,36 @@ exports.getNewProducts = AsyncHandler(async (req, res, next) => {
 		newProducts,
 	})
 })
+// @desc    Get best-selling products (admin-curated)  =>  GET /api/best-sellers
+exports.getBestSellers = AsyncHandler(async (req, res, next) => {
+	const bestSellers = await Product.find({ bestSeller: true })
+		.sort({ updatedAt: -1 })
+		.limit(20)
+
+	res.status(200).json({
+		success: true,
+		count: bestSellers.length,
+		bestSellers,
+	})
+})
+
+// @desc    Flag / unflag a product as best-seller - ADMIN
+// @route   PUT /api/admin/products/:id/best-seller
+exports.setBestSeller = AsyncHandler(async (req, res, next) => {
+	const product = await Product.findById(req.params.id)
+	if (!product) {
+		return next(new ErrorHandler('Product not found', 404))
+	}
+
+	product.bestSeller = req.body.bestSeller === false || req.body.bestSeller === 'false' ? false : true
+	await product.save({ validateBeforeSave: false })
+
+	res.status(200).json({
+		success: true,
+		product,
+	})
+})
+
 exports.getPromoProducts = AsyncHandler(async (req, res, next) => {
 	const limit = 20;
 
@@ -103,7 +134,12 @@ exports.getPromoProducts = AsyncHandler(async (req, res, next) => {
 // @route   GET /api/products/:id
 // @access  Public
 exports.getSingleProduct = AsyncHandler(async (req, res, next) => {
-	const product = await Product.findById(req.params.id)
+	// Increment the view counter (simple, not real-time) and return the product
+	const product = await Product.findByIdAndUpdate(
+		req.params.id,
+		{ $inc: { views: 1 } },
+		{ new: true }
+	)
 
 	if (!product) {
 		return next(new ErrorHandler('Product not found', 404))
@@ -540,6 +576,9 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 		runValidators: true,
 		useFindAndModify: false,
 	});
+
+	// Notify admin if the product is now near-empty / out of stock
+	await notifyLowStock(product);
 
 	res.status(200).json({
 		success: true,

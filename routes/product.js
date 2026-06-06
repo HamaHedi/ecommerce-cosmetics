@@ -14,7 +14,9 @@ const {
 	getStatistics,
 	getPromoProducts,
 	getNewProducts,
-	importProducts
+	importProducts,
+	getBestSellers,
+	setBestSeller
 } = require('../controllers/product')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -27,6 +29,7 @@ router.route('/products').get(getProducts)
 router.route('/statistics').get(getStatistics)
 router.route('/products-promo').get(getPromoProducts)
 router.route('/new-product').get(getNewProducts)
+router.route('/best-sellers').get(getBestSellers)
 
 router.route('/products/:id').get(getSingleProduct)
 
@@ -51,6 +54,10 @@ router
 		updateProduct
 	)
 	.delete(isAuthenticatedUser, authorizeRoles('admin'), deleteProduct)
+
+router
+	.route('/admin/products/:id/best-seller')
+	.put(isAuthenticatedUser, authorizeRoles('admin'), setBestSeller)
 
 router
 	.route('/review')

@@ -4,6 +4,11 @@ const Coupon = require('../models/coupon')
 
 const ErrorHandler = require('../utils/errorHandler')
 const AsyncHandler = require('express-async-handler')
+const { sendMail } = require('../utils/mailer')
+const { createNotification, notifyLowStock } = require('./notification')
+
+// Admin email that should receive a copy of every new order
+const ORDER_NOTIFY_EMAIL = 'Lyna.bourigua@gmail.com'
 
 // Create a new order   =>  /api/order/new
 exports.newOrder = AsyncHandler(async (req, res, next) => {
@@ -43,6 +48,42 @@ exports.newOrder = AsyncHandler(async (req, res, next) => {
 			/* ignore */
 		}
 	}
+
+	// Admin in-app notification for the new order (best-effort)
+	const itemCount = (orderItems || []).reduce(
+		(acc, it) => acc + (Number(it.quantity) || 0),
+		0
+	)
+	await createNotification({
+		type: 'order',
+		title: 'Nouvelle commande',
+		message: `Commande de ${itemCount} article(s) — total DT ${Number(totalPrice).toFixed(2)}`,
+		link: `/admin/order/${order._id}`,
+		order: order._id,
+	})
+
+	// Email the admin about the new order (best-effort, fire-and-forget)
+	const itemsHtml = (orderItems || [])
+		.map(
+			(it) =>
+				`<li>${it.name} × ${it.quantity} — DT ${Number(it.price).toFixed(2)}</li>`
+		)
+		.join('')
+	sendMail({
+		to: ORDER_NOTIFY_EMAIL,
+		subject: `🛍️ Nouvelle commande — DT ${Number(totalPrice).toFixed(2)}`,
+		html: `
+			<h2>Nouvelle commande reçue</h2>
+			<p><b>Total :</b> DT ${Number(totalPrice).toFixed(2)}</p>
+			<p><b>Livraison :</b> ${deliveryGovernorate || '—'} (DT ${Number(shippingPrice || 0).toFixed(2)})</p>
+			${couponCode ? `<p><b>Code promo :</b> ${couponCode} (− DT ${Number(discount || 0).toFixed(2)})</p>` : ''}
+			<p><b>Téléphone :</b> ${shippingInfo?.phoneNo || '—'}</p>
+			<p><b>Adresse :</b> ${shippingInfo?.address || ''}, ${shippingInfo?.city || ''}</p>
+			<h3>Articles</h3>
+			<ul>${itemsHtml}</ul>
+			<p>ID commande : ${order._id}</p>
+		`,
+	})
 
 	res.status(200).json({
 		success: true,
@@ -123,6 +164,9 @@ async function updateStock(id, quantity) {
 	product.stock = product.stock - quantity
 
 	await product.save({ validateBeforeSave: false })
+
+	// Notify admin if this product is now near-empty / out of stock
+	await notifyLowStock(product)
 }
 
 // Delete order   =>   /api/admin/order/:id
