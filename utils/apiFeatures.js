@@ -5,20 +5,32 @@ class APIFeatures {
 	}
 
 	search() {
+		const raw = this.queryStr.keyword
 
-		const keyword = this.queryStr.keyword
-		
-			? {
-				
-				$or: [
-					{ name: { $regex:this.queryStr.keyword, $options: 'i' } },
-					// { category: { $regex: this.queryStr.category, $options: 'i' } },
-					// { subcategory: { $regex: this.queryStr.category, $options: 'i' } }
-				]
-			}
-			: {}
-	
-		this.query = this.query.find({ ...keyword })
+		if (raw && String(raw).trim()) {
+			// Escape regex special characters so user input can't break the query
+			const escape = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+			// Split the phrase into words and require EVERY word to match somewhere
+			// (name / description / category / subcategory / brand / code). This makes
+			// the search forgiving: word order, extra words and partial words all work,
+			// so the user no longer needs the exact product name.
+			const tokens = String(raw)
+				.trim()
+				.split(/\s+/)
+				.filter(Boolean)
+				.slice(0, 8)
+
+			const fields = ['name', 'description', 'category', 'subcategory', 'brand', 'code']
+
+			const andConditions = tokens.map((token) => {
+				const regex = { $regex: escape(token), $options: 'i' }
+				return { $or: fields.map((f) => ({ [f]: regex })) }
+			})
+
+			this.query = this.query.find(andConditions.length ? { $and: andConditions } : {})
+		}
+
 		return this
 	}
 	

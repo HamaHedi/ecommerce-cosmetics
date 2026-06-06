@@ -99,12 +99,16 @@ exports.updateOrder = AsyncHandler(async (req, res, next) => {
 		return next(new ErrorHandler('You have already delivered this order', 400))
 	}
 
-	order.orderItems.forEach(async (item) => {
-		await updateStock(item.product, item.quantity)
-	})
+	// Only deduct stock when the order transitions into "Delivered" — not on
+	// every update, and not for Cancelled / Returned statuses.
+	if (req.body.status === 'Delivered' && order.orderStatus !== 'Delivered') {
+		for (const item of order.orderItems) {
+			await updateStock(item.product, item.quantity)
+		}
+		order.deliveredAt = Date.now()
+	}
 
 	order.orderStatus = req.body.status
-	order.deliveredAt = Date.now()
 
 	await order.save()
 
