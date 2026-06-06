@@ -13,7 +13,8 @@ const {
 	deleteReview,
 	getStatistics,
 	getPromoProducts,
-	getNewProducts
+	getNewProducts,
+	importProducts
 } = require('../controllers/product')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -30,6 +31,7 @@ router.route('/new-product').get(getNewProducts)
 router.route('/products/:id').get(getSingleProduct)
 
 router.route('/admin/products').get(isAuthenticatedUser, authorizeRoles('admin'), getAdminProducts)
+router.route('/admin/products/import').post(isAuthenticatedUser, authorizeRoles('admin'), importProducts)
 router
 	.route('/admin/products')
 	.post(

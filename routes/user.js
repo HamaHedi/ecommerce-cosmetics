@@ -14,7 +14,10 @@ const {
 	getUserDetails,
 	updateUser,
 	deleteUser,
-	newsLetter
+	newsLetter,
+	getAddresses,
+	addAddress,
+	deleteAddress
 } = require('../controllers/user')
 
 const { isAuthenticatedUser, authorizeRoles } = require('../middlewares/auth')
@@ -40,6 +43,11 @@ router.route('/password/forgot').post(userPasswordForgotValidator, runValidation
 router.route('/password/reset/:token').put(userPasswordResetValidator, runValidation, resetPassword)
 
 router.route('/me').get(isAuthenticatedUser, getUserProfile)
+
+// Address book
+router.route('/me/addresses').get(isAuthenticatedUser, getAddresses)
+router.route('/me/addresses').post(isAuthenticatedUser, addAddress)
+router.route('/me/addresses/:addressId').delete(isAuthenticatedUser, deleteAddress)
 router
 	.route('/password/update')
 	.put(isAuthenticatedUser, userPasswordUpdateValidator, runValidation, updatePassword)

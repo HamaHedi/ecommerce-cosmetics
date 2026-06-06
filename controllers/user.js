@@ -166,6 +166,37 @@ exports.getUserProfile = AsyncHandler(async (req, res, next) => {
   });
 });
 
+// ---- Address book ----
+// (uses findByIdAndUpdate to avoid the pre-save password re-hash hook)
+exports.getAddresses = AsyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id);
+  res.status(200).json({ success: true, addresses: user.addresses || [] });
+});
+
+exports.addAddress = AsyncHandler(async (req, res, next) => {
+  const { label, address, city, postalCode, phoneNo, governorate } = req.body;
+  if (!address) return next(new ErrorHandler("Adresse requise", 400));
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    {
+      $push: {
+        addresses: { label, address, city, postalCode, phoneNo, governorate },
+      },
+    },
+    { new: true, runValidators: false }
+  );
+  res.status(201).json({ success: true, addresses: user.addresses });
+});
+
+exports.deleteAddress = AsyncHandler(async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { $pull: { addresses: { _id: req.params.addressId } } },
+    { new: true }
+  );
+  res.status(200).json({ success: true, addresses: user.addresses });
+});
+
 // @desc    Change password
 // @route   PUT /api/password/update
 // @access  Private

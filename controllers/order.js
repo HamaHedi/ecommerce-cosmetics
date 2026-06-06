@@ -1,12 +1,23 @@
 const Order = require('../models/order')
 const Product = require('../models/product')
+const Coupon = require('../models/coupon')
 
 const ErrorHandler = require('../utils/errorHandler')
 const AsyncHandler = require('express-async-handler')
 
 // Create a new order   =>  /api/order/new
 exports.newOrder = AsyncHandler(async (req, res, next) => {
-	const { orderItems, shippingInfo, itemsPrice, taxPrice, shippingPrice, totalPrice } = req.body
+	const {
+		orderItems,
+		shippingInfo,
+		itemsPrice,
+		taxPrice,
+		shippingPrice,
+		totalPrice,
+		couponCode,
+		discount,
+		deliveryGovernorate,
+	} = req.body
 
 	const order = await Order.create({
 		orderItems,
@@ -15,8 +26,23 @@ exports.newOrder = AsyncHandler(async (req, res, next) => {
 		taxPrice,
 		shippingPrice,
 		totalPrice,
+		couponCode,
+		discount: discount || 0,
+		deliveryGovernorate,
 		user: req.user._id,
 	})
+
+	// Increment coupon usage (best-effort, never blocks the order)
+	if (couponCode) {
+		try {
+			await Coupon.updateOne(
+				{ code: String(couponCode).toUpperCase().trim() },
+				{ $inc: { usedCount: 1 } }
+			)
+		} catch (e) {
+			/* ignore */
+		}
+	}
 
 	res.status(200).json({
 		success: true,

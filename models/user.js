@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: 'user',
 		},
+		addresses: [
+			{
+				label: { type: String },
+				address: { type: String, required: true },
+				city: { type: String },
+				postalCode: { type: String },
+				phoneNo: { type: String },
+				governorate: { type: String },
+			},
+		],
 		resetPasswordToken: String,
 		resetPasswordExpire: Date,
 	},
@@ -41,10 +51,11 @@ const userSchema = new mongoose.Schema(
 // Encrypting password before saving user
 userSchema.pre('save', async function (next) {
 	if (!this.isModified('password')) {
-		next()
+		return next()
 	}
 
 	this.password = await bcrypt.hash(this.password, 10)
+	next()
 })
 
 // Compare user password

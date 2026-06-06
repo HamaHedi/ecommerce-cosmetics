@@ -125,6 +125,46 @@ exports.getSingleProduct = AsyncHandler(async (req, res, next) => {
 // 	})
 // })
 
+// Admin: bulk-update products from CSV (matched by _id) =>  POST /api/admin/products/import
+// Updates name/price/oldPrice/stock for existing products (round-trip with the CSV export).
+exports.importProducts = AsyncHandler(async (req, res, next) => {
+	const { products } = req.body;
+	if (!Array.isArray(products) || products.length === 0) {
+		return next(new ErrorHandler('Aucun produit à importer', 400));
+	}
+
+	let updated = 0;
+	let skipped = 0;
+	for (const p of products) {
+		if (!p.id) {
+			skipped++;
+			continue;
+		}
+		const set = {};
+		if (p.name) set.name = p.name;
+		if (p.price !== '' && p.price != null && !isNaN(Number(p.price)))
+			set.price = Number(p.price);
+		if (p.oldPrice !== '' && p.oldPrice != null && !isNaN(Number(p.oldPrice)))
+			set.oldPrice = Number(p.oldPrice);
+		if (p.stock !== '' && p.stock != null && !isNaN(Number(p.stock)))
+			set.stock = Number(p.stock);
+
+		if (Object.keys(set).length === 0) {
+			skipped++;
+			continue;
+		}
+		try {
+			const r = await Product.updateOne({ _id: p.id }, { $set: set });
+			if (r.modifiedCount || r.nModified) updated++;
+			else skipped++;
+		} catch (e) {
+			skipped++;
+		}
+	}
+
+	res.status(200).json({ success: true, updated, skipped });
+});
+
 exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 	const page = parseInt(req.query.page) || 1;
 	const limit = parseInt(req.query.limit) || 5;
