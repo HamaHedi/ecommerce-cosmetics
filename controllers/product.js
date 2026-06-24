@@ -370,6 +370,10 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		if (req.body?.colors) {
 			try {
 				req.body.colors = JSON.parse(req.body.colors);
+				// Drop empty color entries so they don't trip schema validation
+				if (Array.isArray(req.body.colors)) {
+					req.body.colors = req.body.colors.filter((c) => c && c.name && String(c.name).trim() !== '');
+				}
 			} catch (error) {
 				return next(new ErrorHandler('Invalid colors format!', 400));
 			}
@@ -377,6 +381,12 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		if (req.body?.sizes) {
 			try {
 				req.body.sizes = JSON.parse(req.body.sizes);
+				// Drop empty size entries so they don't trip schema validation
+				if (Array.isArray(req.body.sizes)) {
+					req.body.sizes = req.body.sizes.filter(
+						(s) => s && s.sizeName && String(s.sizeName).trim() !== '' && s.sizePrice !== '' && s.sizePrice != null
+					);
+				}
 			} catch (error) {
 				return next(new ErrorHandler('Invalid sizes', 400));
 			}
