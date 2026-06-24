@@ -253,6 +253,10 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		const certificatess = req.files.certificates; // Checking if certificates are provided
 		let certificates = [];
 
+		// Ensure upload directories exist (e.g. on a fresh container)
+		fs.mkdirSync(path.join(__dirname, '../public', 'products'), { recursive: true });
+		fs.mkdirSync(path.join(__dirname, '../public', 'certificates'), { recursive: true });
+
 		// Process image files
 		if (Array.isArray(files)) {
 			// Multiple files
@@ -386,7 +390,8 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 			product,
 		});
 	} catch (error) {
-		return next(new ErrorHandler('Error uploading files!', 400));
+		console.error('createProduct error:', error);
+		return next(new ErrorHandler(`Error uploading files! ${error.message}`, 400));
 	}
 
 	// Helper function to validate file types
