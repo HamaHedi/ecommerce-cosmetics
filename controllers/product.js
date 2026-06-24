@@ -217,7 +217,7 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 
 	// Fetch products with pagination and search filtering
 	const products = await Product.find(searchFilter)
-		.sort({ createdAt: -1 })
+		.sort({ createdAt: -1, _id: -1 })
 		.limit(limit)
 		.skip(startIndex);
 
