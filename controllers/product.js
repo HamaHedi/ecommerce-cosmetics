@@ -208,14 +208,20 @@ exports.getAdminProducts = AsyncHandler(async (req, res, next) => {
 	const startIndex = (page - 1) * limit;
 	const endIndex = page * limit;
 
-	// Create a filter for searching by name, using a case-insensitive regex
-	const searchFilter = searchQuery ? { name: { $regex: searchQuery, $options: 'i' } } : {};
+	// Build the filter from search + category/brand/stock so that pagination
+	// (totalProducts/totalPages) reflects the actual filtered result set.
+	const searchFilter = {};
+	if (searchQuery) searchFilter.name = { $regex: searchQuery, $options: 'i' };
+	if (req.query.category) searchFilter.category = req.query.category;
+	if (req.query.brand) searchFilter.brand = req.query.brand;
+	if (req.query.stock === 'in') searchFilter.stock = { $gt: 0 };
+	else if (req.query.stock === 'out') searchFilter.stock = { $lte: 0 };
 
-	// Get total count of products matching the search query
+	// Get total count of products matching the filter
 	const totalProducts = await Product.countDocuments(searchFilter);
 	const totalPages = Math.ceil(totalProducts / limit);
 
-	// Fetch products with pagination and search filtering
+	// Fetch products with pagination and filtering
 	const products = await Product.find(searchFilter)
 		.sort({ createdAt: -1, _id: -1 })
 		.limit(limit)
