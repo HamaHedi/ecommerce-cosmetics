@@ -397,6 +397,19 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 				return next(new ErrorHandler('Invalid sizes', 400));
 			}
 		}
+		if (req.body?.volumes) {
+			try {
+				req.body.volumes = JSON.parse(req.body.volumes);
+				// Drop empty volume entries so they don't trip schema validation
+				if (Array.isArray(req.body.volumes)) {
+					req.body.volumes = req.body.volumes.filter(
+						(v) => v && v.volume && String(v.volume).trim() !== '' && v.reference && String(v.reference).trim() !== ''
+					);
+				}
+			} catch (error) {
+				return next(new ErrorHandler('Invalid volumes', 400));
+			}
+		}
 		// Create the product
 		const product = await Product.create(req.body);
 
@@ -589,6 +602,18 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			req.body.sizes = JSON.parse(req.body.sizes);
 		} catch (error) {
 			return next(new ErrorHandler('Invalid sizes', 400));
+		}
+	}
+	if (req.body?.volumes) {
+		try {
+			req.body.volumes = JSON.parse(req.body.volumes);
+			if (Array.isArray(req.body.volumes)) {
+				req.body.volumes = req.body.volumes.filter(
+					(v) => v && v.volume && String(v.volume).trim() !== '' && v.reference && String(v.reference).trim() !== ''
+				);
+			}
+		} catch (error) {
+			return next(new ErrorHandler('Invalid volumes', 400));
 		}
 	}
 	// Update product

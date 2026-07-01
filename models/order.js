@@ -59,6 +59,14 @@ const orderSchema = mongoose.Schema(
 					type: String,
 					required: false,
 				},
+				volume: {
+					type: String,
+					required: false,
+				},
+				volumeRef: {
+					type: String,
+					required: false,
+				},
 				product: {
 					type: mongoose.Schema.Types.ObjectId,
 					required: true,

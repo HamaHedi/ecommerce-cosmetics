@@ -19,6 +19,16 @@ const teaintSchema = new mongoose.Schema({
 		required: true,
 	}
 });
+const volumeSchema = new mongoose.Schema({
+	volume: {
+		type: String,
+		required: true,
+	},
+	reference: {
+		type: String,
+		required: true,
+	}
+});
 
 const productSchema = new mongoose.Schema(
 	{
@@ -151,6 +161,10 @@ const productSchema = new mongoose.Schema(
 				},
 			},
 		],
+		volumes: {
+			type: [volumeSchema],
+			required: false,
+		},
 		user: {
 			type: mongoose.Schema.ObjectId,
 			ref: 'User',
