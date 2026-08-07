@@ -9,6 +9,20 @@ const category = require('../models/category')
 const user = require('../models/user')
 const order = require('../models/order')
 const { notifyLowStock } = require('./notification')
+const { MAX_UPLOAD_MB, ALLOWED_IMAGE_MIMETYPES } = require('../config/uploads')
+
+// Returns null when the upload is usable, otherwise the reason it was rejected.
+// express-fileupload flags `truncated` when a file hits the size limit, so an
+// oversized .png must not be reported as a bad format.
+const fileRejectionReason = (file) => {
+	if (!ALLOWED_IMAGE_MIMETYPES.includes(file.mimetype)) {
+		return `${file.name}: unsupported format (${file.mimetype}). Only .png, .jpg and .jpeg are allowed`
+	}
+	if (file.truncated) {
+		return `${file.name}: file is too large (max ${MAX_UPLOAD_MB} MB per file)`
+	}
+	return null
+}
 
 // @desc    Get All Products?keyword=
 // @route   GET /api/products
@@ -256,6 +270,7 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 
 		const files = req.files.files;
 		let images = [];
+		const rejectedImages = [];
 		const certificatess = req.files.certificates; // Checking if certificates are provided
 		let certificates = [];
 
@@ -269,7 +284,10 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 			let promises = [];
 
 			files.forEach((file) => {
-				if (check(file)) {
+				const reason = fileRejectionReason(file);
+				if (reason) {
+					rejectedImages.push(reason);
+				} else {
 					const fileName =
 						path.parse(file.name).name +
 						'-' +
@@ -292,7 +310,10 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 			await Promise.all(promises);
 		} else {
 			// Single file
-			if (check(files)) {
+			const reason = fileRejectionReason(files);
+			if (reason) {
+				rejectedImages.push(reason);
+			} else {
 				const fileName =
 					path.parse(files.name).name +
 					'-' +
@@ -319,7 +340,7 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 				let promises = [];
 
 				certificatess.forEach((file) => {
-					if (check(file)) {
+					if (!fileRejectionReason(file)) {
 						const fileName =
 							path.parse(file.name).name +
 							'-' +
@@ -342,7 +363,7 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 				await Promise.all(promises);
 			} else {
 				// Single file
-				if (check(certificatess)) {
+				if (!fileRejectionReason(certificatess)) {
 					const fileName =
 						path.parse(certificatess.name).name +
 						'-' +
@@ -365,7 +386,12 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 
 		// Check for images validity
 		if (images.length === 0) {
-			return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+			return next(
+				new ErrorHandler(
+					rejectedImages.length ? rejectedImages.join(' — ') : 'No image uploaded!',
+					400
+				)
+			);
 		}
 
 		// Attach images and certificates to the request body
@@ -422,19 +448,6 @@ exports.createProduct = AsyncHandler(async (req, res, next) => {
 		console.error('createProduct error:', error);
 		return next(new ErrorHandler(`Error uploading files! ${error.message}`, 400));
 	}
-
-	// Helper function to validate file types
-	function check(file) {
-		if (
-			(file.mimetype === 'image/png' ||
-				file.mimetype === 'image/jpg' ||
-				file.mimetype === 'image/jpeg') &&
-			!file.truncated
-		) {
-			return true;
-		}
-		return false;
-	}
 });
 
 
@@ -469,11 +482,15 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 		try {
 			const files = req.files.files;
 			let images = [];
+			const rejected = [];
 
 			if (Array.isArray(files)) {
 				let promises = [];
 				files.forEach((file) => {
-					if (check(file)) {
+					const reason = fileRejectionReason(file);
+					if (reason) {
+						rejected.push(reason);
+					} else {
 						const fileName =
 							path.parse(file.name).name +
 							'-' +
@@ -494,7 +511,10 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 
 				await Promise.all(promises);
 			} else {
-				if (check(files)) {
+				const reason = fileRejectionReason(files);
+				if (reason) {
+					rejected.push(reason);
+				} else {
 					const fileName =
 						path.parse(files.name).name +
 						'-' +
@@ -514,7 +534,9 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			}
 
 			if (images.length === 0) {
-				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+				return next(
+					new ErrorHandler(rejected.join(' — ') || 'No image uploaded!', 400)
+				);
 			}
 
 			req.body.images = images;
@@ -536,11 +558,15 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 		try {
 			const files = req.files.certificates;
 			let images = [];
+			const rejected = [];
 
 			if (Array.isArray(files)) {
 				let promises = [];
 				files.forEach((file) => {
-					if (check(file)) {
+					const reason = fileRejectionReason(file);
+					if (reason) {
+						rejected.push(reason);
+					} else {
 						const fileName =
 							path.parse(file.name).name +
 							'-' +
@@ -561,7 +587,10 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 
 				await Promise.all(promises);
 			} else {
-				if (check(files)) {
+				const reason = fileRejectionReason(files);
+				if (reason) {
+					rejected.push(reason);
+				} else {
 					const fileName =
 						path.parse(files.name).name +
 						'-' +
@@ -581,7 +610,9 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 			}
 
 			if (images.length === 0) {
-				return next(new ErrorHandler('Only .png, .jpg and .jpeg format allowed!', 400));
+				return next(
+					new ErrorHandler(rejected.join(' — ') || 'No certificate uploaded!', 400)
+				);
 			}
 
 			req.body.certificates = images;
@@ -630,18 +661,6 @@ exports.updateProduct = AsyncHandler(async (req, res, next) => {
 		success: true,
 		product,
 	});
-
-	function check(file) {
-		if (
-			(file.mimetype === 'image/png' ||
-				file.mimetype === 'image/jpg' ||
-				file.mimetype === 'image/jpeg') &&
-			!file.truncated
-		) {
-			return true;
-		}
-		return false;
-	}
 });
 
 // @desc    Delete Product

@@ -1,4 +1,5 @@
 const { notFound, errors } = require("./middlewares/errors");
+const { MAX_UPLOAD_BYTES } = require("./config/uploads");
 const generateAdmin = require("./config/generateAdmin");
 const connectDatabase = require("./config/database");
 const fileUpload = require("express-fileupload");
@@ -76,7 +77,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(
 	fileUpload({
 		createParentPath: true,
-		limits: { fileSize: 1024 * 1024 * 2 },
+		limits: { fileSize: MAX_UPLOAD_BYTES },
 	})
 );
 
