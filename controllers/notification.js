@@ -2,7 +2,11 @@ const Notification = require('../models/notification')
 const AsyncHandler = require('express-async-handler')
 
 // Low-stock threshold: a product is "near empty" at or below this many units
-const LOW_STOCK_THRESHOLD = 5
+// (1 = the admin is only warned on the last unit left, or a real rupture)
+const LOW_STOCK_THRESHOLD = 1
+
+const LOW_STOCK_TITLE = 'Stock faible'
+const OUT_OF_STOCK_TITLE = 'Stock épuisé'
 
 // --- Internal helpers (used by other controllers) ---
 
@@ -22,20 +26,26 @@ async function notifyLowStock(product) {
 		if (!product || typeof product.stock !== 'number') return
 		if (product.stock > LOW_STOCK_THRESHOLD) return
 
+		const outOfStock = product.stock <= 0
+		const title = outOfStock ? OUT_OF_STOCK_TITLE : LOW_STOCK_TITLE
+
+		// Skip only if the admin already has an unread alert of the same level.
+		// A rupture still fires over an unread "stock faible": it is the more
+		// urgent state, and it would otherwise be silently swallowed.
 		const existing = await Notification.findOne({
 			type: 'low_stock',
 			product: product._id,
 			read: false,
 		})
-		if (existing) return
+		if (existing && (existing.title === title || existing.title === OUT_OF_STOCK_TITLE))
+			return
 
-		const outOfStock = product.stock <= 0
 		await createNotification({
 			type: 'low_stock',
-			title: outOfStock ? 'Stock épuisé' : 'Stock faible',
+			title,
 			message: outOfStock
 				? `« ${product.name} » est en rupture de stock.`
-				: `« ${product.name} » : plus que ${product.stock} en stock.`,
+				: `« ${product.name} » : il ne reste plus qu'un seul article en stock.`,
 			link: `/admin/product/${product._id}`,
 			product: product._id,
 		})
