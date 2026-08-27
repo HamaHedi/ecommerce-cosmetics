@@ -55,6 +55,14 @@ const orderSchema = mongoose.Schema(
 					type: String,
 					required: false,
 				},
+				teintRef: {
+					type: String,
+					required: false,
+				},
+				teintName: {
+					type: String,
+					required: false,
+				},
 				size: {
 					type: String,
 					required: false,

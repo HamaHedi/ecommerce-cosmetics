@@ -64,10 +64,16 @@ exports.newOrder = AsyncHandler(async (req, res, next) => {
 
 	// Email the admin about the new order (best-effort, fire-and-forget)
 	const itemsHtml = (orderItems || [])
-		.map(
-			(it) =>
-				`<li>${it.name} × ${it.quantity} — DT ${Number(it.price).toFixed(2)}</li>`
-		)
+		.map((it) => {
+			// La teinte distingue deux lignes d'un même produit : sans sa
+			// référence, la commande est illisible pour la préparation.
+			const teinte = it.teintRef
+				? ` — teinte ${it.teintName ? `${it.teintName} ` : ''}<b>${it.teintRef}</b>`
+				: ''
+			return `<li>${it.name} × ${it.quantity} — DT ${Number(it.price).toFixed(
+				2
+			)}${teinte}</li>`
+		})
 		.join('')
 	sendMail({
 		to: ORDER_NOTIFY_EMAIL,
